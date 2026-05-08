@@ -37,7 +37,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product create(Product product) {
 
-        // 🔥 check category tồn tại
+        // check category tồn tại
         Integer categoryId = product.getCategory().getCategoryId();
 
         Category category = categoryRepository.findById(categoryId)
@@ -60,7 +60,7 @@ public class ProductServiceImpl implements ProductService {
         old.setDescription(product.getDescription());
         old.setImage(product.getImage());
 
-        // 🔥 xử lý category đúng cách
+        // xử lý category 
         if (product.getCategory() != null) {
             Integer categoryId = product.getCategory().getCategoryId();
 
@@ -81,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
 
-    // 6. SEARCH NÂNG CẤP (CHUẨN)
+    // 6. SEARCH 
     @Override
     public List<Product> search(String name, BigDecimal min, BigDecimal max, Integer categoryId) {
 

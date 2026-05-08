@@ -53,7 +53,7 @@ public class ProductController {
         return ResponseEntity.ok("Xóa thành công");
     }
 
-    // 6. SEARCH + FILTER (NÂNG CẤP XỊN)
+    // 6. SEARCH + FILTER
     @GetMapping("/search")
     public ResponseEntity<List<Product>> search(
             @RequestParam(required = false) String name,
