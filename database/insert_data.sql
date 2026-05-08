@@ -43,12 +43,15 @@ INSERT INTO products (name, price, stock, description, image, category_id, statu
 ('Bông Tẩy Trang 222m', 45000, 200, 'Bông mềm không xơ', 'bong.jpg', 6, 'ACTIVE');
 
 -- 5. Cart & Cart Items
-INSERT INTO cart (user_id) VALUES (3), (4), (5), (6), (7);
+INSERT INTO cart (user_id) VALUES (1), (3), (4), (5), (6), (7);
 INSERT INTO cart_items (cart_id, product_id, quantity) VALUES 
-(1, 1, 2), (1, 8, 1), 
-(2, 4, 1), (2, 16, 2),
-(3, 10, 1),
-(4, 15, 10);
+(1, 1, 2), 
+(1, 4, 1), 
+(2, 8, 1), 
+(3, 4, 1),
+(3, 16, 2),
+(4, 10, 1),
+(5, 15, 10);
 
 -- 6. Orders (Status: PENDING, SHIPPING, COMPLETED, CANCELLED)
 INSERT INTO orders (user_id, total_price, recipient_name, recipient_phone, shipping_address, status, created_at) VALUES 
@@ -99,5 +102,3 @@ INSERT INTO reviews (user_id, product_id, rating, comment, is_verified_purchase,
 
 -- User 6 test tính năng lọc sao (Cho 3 sao)
 (6, 12, 3, 'Giá hơi chát so với dung tích, chưa xài thử nên chưa biết chất lượng ra sao.', FALSE, 'NORMAL', NOW());
-
-INSERT INTO cart (user_id) VALUES (1);

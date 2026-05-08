@@ -2,14 +2,18 @@ package com.cosmetics.ecommerce.repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.cosmetics.ecommerce.entity.Product;
+
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
@@ -43,4 +47,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     //  kiểm tra tồn tại
     boolean existsByName(String name);
+
+    //Tìm và khóa sản phẩm để trừ kho an toàn, tránh bị âm kho
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Product p Where p.productId = :id")
+    Optional<Product> findByIdWithLock(Integer id);
 }

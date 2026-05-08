@@ -1,0 +1,76 @@
+/* Container bao quanh toàn bộ trang để căn giữa form */
+.register-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh; /* Chiều cao tối thiểu để không bị dính sát Header/Footer */
+    padding: 40px 20px;
+    background-color: #f9f9f9; /* Màu nền nhẹ để phân biệt với Header */
+}
+
+/* Tiêu đề trang */
+.register-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Khung của Form */
+.register-form {
+    background: white;
+    padding: 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px; /* Độ rộng tối đa của form */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* Từng khối label + input */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Giữ input không bị tràn khung */
+}
+
+/* Nút đăng ký */
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: #ff4d4f; /* Màu chủ đạo (ví dụ màu đỏ mỹ phẩm) */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.btn-submit:hover {
+    background-color: #e03e3f;
+}
+
+/* Phần footer của form (link đăng nhập) */
+.register-footer {
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.register-footer a {
+    color: #ff4d4f;
+    text-decoration: none;
+    font-weight: bold;
+}

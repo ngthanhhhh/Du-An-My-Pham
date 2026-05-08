@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS reviews;
 -- Bật lại kiểm tra khóa ngoại
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -200,7 +201,7 @@ CREATE TABLE payments (
 	-- Số tiền thanh toán
     amount DECIMAL(12,2) NOT NULL,
 	-- Thời gian thanh toán
-    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_date DATETIME NULL DEFAULT NULL,
 	-- Trạng thái thanh toán
     status ENUM('PENDING','SUCCESS','FAILED') DEFAULT 'PENDING',
     CONSTRAINT fk_payment_order

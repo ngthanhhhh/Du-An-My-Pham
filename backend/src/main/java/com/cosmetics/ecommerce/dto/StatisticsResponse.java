@@ -1,0 +1,19 @@
+package com.cosmetics.ecommerce.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+
+public class StatisticsResponse {
+    private Double totalRevenue;
+    private Long totalOrders;
+    private Long totalUsers;
+
+    //Thong ke trang thai don hang
+    private Long pendingOrders;
+    private Long shippingOrders;
+    private Long completedOrders;
+    private Long cancelledOrders;
+}
