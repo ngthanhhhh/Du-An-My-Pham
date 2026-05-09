@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.cosmetics.ecommerce.entity.Product;
+import com.cosmetics.ecommerce.enums.ProductStatus;
 
 import jakarta.persistence.LockModeType;
 
@@ -26,6 +27,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // lọc theo category
     List<Product> findByCategory_CategoryId(Integer categoryId);
+
+    List<Product> findByStatus(ProductStatus status);
 
     // kết hợp nhiều điều kiện (QUAN TRỌNG)
     @Query("""

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.cosmetics.ecommerce.entity.Category;
 import com.cosmetics.ecommerce.entity.Product;
+import com.cosmetics.ecommerce.enums.ProductStatus;
 import com.cosmetics.ecommerce.repository.CategoryRepository;
 import com.cosmetics.ecommerce.repository.ProductRepository;
 import com.cosmetics.ecommerce.service.ProductService;
@@ -20,37 +21,96 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
-    // 1. GET ALL
+    // =========================
+    // VALIDATION
+    // =========================
+    private void validateProduct(Product product) {
+
+        if (product == null) {
+            throw new RuntimeException("Dữ liệu sản phẩm không hợp lệ");
+        }
+
+        // NAME
+        if (product.getName() == null
+                || product.getName().trim().isEmpty()) {
+
+            throw new RuntimeException("Tên sản phẩm không được để trống");
+        }
+
+        // PRICE
+        if (product.getPrice() == null
+                || product.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+
+            throw new RuntimeException("Giá sản phẩm phải lớn hơn 0");
+        }
+
+        // STOCK
+        if (product.getStock() == null
+                || product.getStock() < 0) {
+
+            throw new RuntimeException("Số lượng tồn kho không được âm");
+        }
+
+        // CATEGORY
+        if (product.getCategory() == null
+                || product.getCategory().getCategoryId() == null) {
+
+            throw new RuntimeException("Danh mục không hợp lệ");
+        }
+    }
+
+    // =========================
+    // GET ALL
+    // =========================
     @Override
     public List<Product> getAll() {
-        return productRepository.findAll();
+        return productRepository.findByStatus(ProductStatus.ACTIVE);
     }
 
-    // 2. GET BY ID
+    // =========================
+    // GET BY ID
+    // =========================
     @Override
     public Product getById(Integer id) {
+
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product không tồn tại"));
+                .orElseThrow(() ->
+                        new RuntimeException("Product không tồn tại"));
     }
 
-    // 3. CREATE
+    // =========================
+    // CREATE
+    // =========================
     @Override
     public Product create(Product product) {
 
-        // check category tồn tại
+        // VALIDATE trước
+        validateProduct(product);
+
+        // CHECK CATEGORY
         Integer categoryId = product.getCategory().getCategoryId();
 
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
+                .orElseThrow(() ->
+                        new RuntimeException("Category không tồn tại"));
 
         product.setCategory(category);
+
+        // mặc định ACTIVE
+        if (product.getStatus() == null) {
+            product.setStatus(ProductStatus.ACTIVE);
+        }
 
         return productRepository.save(product);
     }
 
-    // 4. UPDATE
+    // =========================
+    // UPDATE
+    // =========================
     @Override
     public Product update(Integer id, Product product) {
+
+        validateProduct(product);
 
         Product old = getById(id);
 
@@ -60,81 +120,132 @@ public class ProductServiceImpl implements ProductService {
         old.setDescription(product.getDescription());
         old.setImage(product.getImage());
 
-        // xử lý category 
-        if (product.getCategory() != null) {
-            Integer categoryId = product.getCategory().getCategoryId();
+        // CATEGORY
+        Integer categoryId = product.getCategory().getCategoryId();
 
-            Category category = categoryRepository.findById(categoryId)
-                    .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() ->
+                        new RuntimeException("Category không tồn tại"));
 
-            old.setCategory(category);
-        }
+        old.setCategory(category);
 
         return productRepository.save(old);
     }
 
-    // 5. DELETE
+    // =========================
+    // DELETE (SOFT DELETE)
+    // =========================
     @Override
     public void delete(Integer id) {
 
         Product product = getById(id);
-        productRepository.delete(product);
+
+        product.setStatus(ProductStatus.INACTIVE);
+
+        productRepository.save(product);
     }
 
-    // 6. SEARCH 
+    // =========================
+    // SEARCH
+    // =========================
     @Override
-    public List<Product> search(String name, BigDecimal min, BigDecimal max, Integer categoryId) {
+    public List<Product> search(
+            String name,
+            BigDecimal min,
+            BigDecimal max,
+            Integer categoryId
+    ) {
 
-        List<Product> products = productRepository.findAll();
+        List<Product> products =
+                productRepository.findByStatus(ProductStatus.ACTIVE);
 
-        if (name != null) {
+        // FILTER NAME
+        if (name != null && !name.trim().isEmpty()) {
+
             products = products.stream()
-                    .filter(p -> p.getName().toLowerCase().contains(name.toLowerCase()))
+                    .filter(p -> p.getName()
+                            .toLowerCase()
+                            .contains(name.toLowerCase()))
                     .toList();
         }
 
+        // FILTER CATEGORY
         if (categoryId != null) {
+
             products = products.stream()
-                    .filter(p -> p.getCategory().getCategoryId().equals(categoryId))
+                    .filter(p -> p.getCategory()
+                            .getCategoryId()
+                            .equals(categoryId))
                     .toList();
         }
 
+        // FILTER PRICE
         if (min != null && max != null) {
+
             products = products.stream()
-                    .filter(p -> p.getPrice().compareTo(min) >= 0
-                            && p.getPrice().compareTo(max) <= 0)
+                    .filter(p ->
+                            p.getPrice().compareTo(min) >= 0
+                                    && p.getPrice().compareTo(max) <= 0
+                    )
                     .toList();
         }
 
         return products;
     }
 
+    // =========================
+    // SEARCH ADVANCED
+    // =========================
     @Override
-    public List<Product> searchAdvanced(String name, Integer categoryId, Double minPrice, Double maxPrice) {
+    public List<Product> searchAdvanced(
+            String name,
+            Integer categoryId,
+            Double minPrice,
+            Double maxPrice
+    ) {
 
-        // ưu tiên filter kết hợp
-        if (name != null && categoryId != null) {
-            return productRepository.findByNameContainingIgnoreCase(name)
-                    .stream()
-                    .filter(p -> p.getCategory().getCategoryId().equals(categoryId))
+        List<Product> products =
+                productRepository.findByStatus(ProductStatus.ACTIVE);
+         
+        // KEY RỖNG
+        if (name != null && name.trim().isEmpty()) {
+            throw new RuntimeException("Vui lòng nhập từ khóa");
+        }
+
+        // NAME
+        if (name != null && !name.trim().isEmpty()) {
+
+            products = products.stream()
+                    .filter(p -> p.getName()
+                            .toLowerCase()
+                            .contains(name.toLowerCase()))
                     .toList();
         }
 
-        if (name != null) {
-            return productRepository.findByNameContainingIgnoreCase(name);
-        }
-
+        // CATEGORY
         if (categoryId != null) {
-            return productRepository.findByCategory_CategoryId(categoryId);
+
+            products = products.stream()
+                    .filter(p -> p.getCategory()
+                            .getCategoryId()
+                            .equals(categoryId))
+                    .toList();
         }
 
+        // PRICE
         if (minPrice != null && maxPrice != null) {
-            return productRepository.findByPriceBetween(
-                    BigDecimal.valueOf(minPrice),
-                    BigDecimal.valueOf(maxPrice)
-            );
+
+            BigDecimal min = BigDecimal.valueOf(minPrice);
+            BigDecimal max = BigDecimal.valueOf(maxPrice);
+
+            products = products.stream()
+                    .filter(p ->
+                            p.getPrice().compareTo(min) >= 0
+                                    && p.getPrice().compareTo(max) <= 0
+                    )
+                    .toList();
         }
 
-        return productRepository.findAll();
+        return products;
     }
 }
