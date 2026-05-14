@@ -1,17 +1,46 @@
 package com.cosmetics.ecommerce.service;
 
 import java.math.BigDecimal;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
+
+import com.cosmetics.ecommerce.dto.ProductRequest;
+import com.cosmetics.ecommerce.dto.ProductResponse;
 import com.cosmetics.ecommerce.entity.Product;
+import com.cosmetics.ecommerce.enums.ProductStatus;
 
 public interface ProductService {
-    List<Product> getAll();
-    Product getById(Integer id);
-    Product create(Product product);
-    Product update(Integer id, Product product);
-    void delete(Integer id);
 
-    List<Product> search(String name, BigDecimal min, BigDecimal max, Integer categoryId);
-    List<Product> searchAdvanced(String name, Integer categoryId, Double minPrice, Double maxPrice);
+    Page<ProductResponse> getPublicProducts(
+            String keyword,
+            Integer categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    );
+
+    ProductResponse getPublicProductDetail(Integer id);
+
+    Page<ProductResponse> getAdminProducts(
+            String keyword,
+            Integer categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ProductStatus status,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    );
+
+    Product getById(Integer id);
+
+    ProductResponse create(ProductRequest request);
+
+    ProductResponse update(Integer id, ProductRequest request);
+
+    void delete(Integer id);
 }

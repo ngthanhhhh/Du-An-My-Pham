@@ -1,11 +1,15 @@
 package com.cosmetics.ecommerce.service.impl;
 
-import java.util.List;
-
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.cosmetics.ecommerce.entity.Category;
+import com.cosmetics.ecommerce.exception.BadRequestException;
+import com.cosmetics.ecommerce.exception.ResourceNotFoundException;
 import com.cosmetics.ecommerce.repository.CategoryRepository;
 import com.cosmetics.ecommerce.service.CategoryService;
 
@@ -17,59 +21,73 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    // 1. GET ALL
     @Override
-    public List<Category> getAll() {
-        return categoryRepository.findAll();
+    public Page<Category> getAll(int page, int size, String sortBy, String direction) {
+
+        if (page < 0) {
+            throw new BadRequestException("Số trang không hợp lệ");
+        }
+
+        if (size <= 0) {
+            throw new BadRequestException("Kích thước trang không hợp lệ");
+        }
+
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "categoryId";
+        }
+
+        Sort sort = "desc".equalsIgnoreCase(direction)
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        return categoryRepository.findAll(pageable);
     }
 
-    // 2. GET BY ID
     @Override
     public Category getById(Integer id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("CATEGORY_NOT_FOUND"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Danh mục không tồn tại"));
     }
 
-    // 3. CREATE
     @Override
     public Category create(Category category) {
 
-        // null guard (phòng trường hợp FE gửi thiếu)
-        if (category.getName() == null || category.getName().trim().isEmpty()) {
-            throw new RuntimeException("CATEGORY_NAME_REQUIRED");
+        validateCategory(category);
+
+        String name = category.getName().trim();
+
+        if (categoryRepository.existsByName(name)) {
+            throw new BadRequestException("Tên danh mục đã tồn tại");
         }
 
-        // check trùng
-        if (categoryRepository.existsByName(category.getName())) {
-            throw new RuntimeException("CATEGORY_NAME_EXISTS");
-        }
+        category.setName(name);
 
         return categoryRepository.save(category);
     }
 
-    // 4. UPDATE
     @Override
     public Category update(Integer id, Category category) {
 
+        validateCategory(category);
+
         Category old = getById(id);
 
-        if (category.getName() == null || category.getName().trim().isEmpty()) {
-            throw new RuntimeException("CATEGORY_NAME_REQUIRED");
+        String newName = category.getName().trim();
+
+        if (!old.getName().equalsIgnoreCase(newName)
+                && categoryRepository.existsByName(newName)) {
+            throw new BadRequestException("Tên danh mục đã tồn tại");
         }
 
-        // check trùng (trừ chính nó)
-        if (!old.getName().equals(category.getName())
-                && categoryRepository.existsByName(category.getName())) {
-            throw new RuntimeException("CATEGORY_NAME_EXISTS");
-        }
-
-        old.setName(category.getName());
+        old.setName(newName);
         old.setDescription(category.getDescription());
 
         return categoryRepository.save(old);
     }
 
-    // 5. DELETE
     @Override
     public void delete(Integer id) {
 
@@ -78,8 +96,18 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             categoryRepository.delete(category);
         } catch (DataIntegrityViolationException e) {
-            // FK constraint (có product)
-            throw new RuntimeException("CATEGORY_HAS_PRODUCTS");
+            throw new BadRequestException("Không thể xóa danh mục đang có sản phẩm");
+        }
+    }
+
+    private void validateCategory(Category category) {
+
+        if (category == null) {
+            throw new BadRequestException("Dữ liệu danh mục không hợp lệ");
+        }
+
+        if (category.getName() == null || category.getName().trim().isEmpty()) {
+            throw new BadRequestException("Tên danh mục không được để trống");
         }
     }
 }

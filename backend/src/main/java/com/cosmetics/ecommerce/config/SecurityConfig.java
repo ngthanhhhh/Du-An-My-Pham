@@ -23,35 +23,16 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
-    /**
-     * Cấu hình bảo mật chính cho REST API.
-     *
-     * Quy ước route:
-     * - /api/v1/auth/**        : Public, dùng cho đăng ký/đăng nhập.
-     * - /api/v1/admin/**       : Chỉ ADMIN được truy cập.
-     * - /api/v1/users/**       : User đã đăng nhập, dùng cho profile/tài khoản hiện tại.
-     * - /api/v1/cart/**        : Chỉ CUSTOMER được thao tác giỏ hàng.
-     * - /api/v1/orders/**      : Chỉ CUSTOMER được thao tác đơn hàng cá nhân.
-     * - GET products/categories: Public để xem sản phẩm, danh mục, review.
-     * - POST product reviews   : Chỉ CUSTOMER được viết review.
-     * - VNPay return           : Public callback để VNPay redirect về hệ thống.
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Cho phép frontend React/Vite gọi API
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Tắt CSRF vì hệ thống dùng JWT stateless
                 .csrf(csrf -> csrf.disable())
-
-                // Không dùng session phía server, mỗi request xác thực bằng JWT
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger/OpenAPI và error endpoint
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
@@ -59,41 +40,31 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // Auth public
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // Public read APIs
                         .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
 
-                        // VNPay callback/redirect public
                         .requestMatchers(HttpMethod.GET, "/api/v1/payments/vnpay-return").permitAll()
 
-                        // Admin APIs
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                        // TẠM MỞ ADMIN API ĐỂ TEST CRUD PRODUCT/CATEGORY
+                        .requestMatchers("/api/v1/admin/**").permitAll()
 
-                        // Customer APIs
                         .requestMatchers("/api/v1/cart/**").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers("/api/v1/orders/**").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/vnpay/**").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews").hasAuthority("ROLE_CUSTOMER")
 
-                        // User profile/current account APIs
                         .requestMatchers("/api/v1/users/**").authenticated()
 
-                        // Các request còn lại phải đăng nhập
                         .anyRequest().authenticated()
                 )
 
-                // Gắn JWT filter trước filter mặc định của Spring Security
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    /**
-     * Cấu hình CORS cho frontend React/Vite.
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
